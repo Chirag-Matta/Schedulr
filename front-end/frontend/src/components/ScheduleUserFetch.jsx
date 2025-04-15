@@ -51,19 +51,38 @@ function ScheduleUserFetch() {
     setLoading(true);
     setMessage(null);
     setError(null);
-    
     try {
-      // Convert the selected time to the selected timezone, then to ISO string
-      const timeInSelectedTimezone = moment.tz(scheduledTime, timezone).format();
+      // Get the hours and minutes from the selected date
+      const hours = scheduledTime.getHours();
+      const minutes = scheduledTime.getMinutes();
+      const day = scheduledTime.getDate();
+      const month = scheduledTime.getMonth();
+      const year = scheduledTime.getFullYear();
       
-      const response = await api.scheduleUserFetch(userId, timeInSelectedTimezone, timezone);
+      // Create a moment in your local timezone with these values
+      const localMoment = moment().set({
+        year, month, date: day, hour: hours, minute: minutes, second: 0, millisecond: 0
+      });
+      
+      // Format without converting (just format the date as a string)
+      const timeString = localMoment.format("YYYY-MM-DDTHH:mm:ss");
+      
+      console.log("Sending to backend:", {
+        userId,
+        scheduledTime: timeString,
+        timezone
+      });
+      
+      const response = await api.scheduleUserFetch(userId, timeString, timezone);
       setMessage(response);
     } catch (err) {
+      console.error('Error details:', err.response?.data || err.message);
       setError('Error scheduling user fetch');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="card mb-4">

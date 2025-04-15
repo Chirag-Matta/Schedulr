@@ -22,7 +22,7 @@ public class KafkaProducerService {
     @Retryable(value = KafkaException.class, maxAttempts = 3, backoff = @Backoff(delay = 1000))
     public void sendUserEvent(UserDetails user) {
     try {
-        kafkaTemplate.send("user-events", String.valueOf(user.getId()), user);
+        kafkaTemplate.send(TOPIC, String.valueOf(user.getId()), user);
         log.info("📤 Sending user data to Kafka: {}", user);
     } catch (KafkaException e) {
         log.error("Failed to send user data to Kafka: {}", e.getMessage());
