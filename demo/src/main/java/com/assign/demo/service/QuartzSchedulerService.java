@@ -8,16 +8,20 @@ import com.assign.demo.quartz.UserFetchJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuartzSchedulerService {
+    private final List<ScheduledJob> scheduledJobs = new ArrayList<>();
 
     private final Scheduler scheduler;
 
@@ -45,15 +49,28 @@ public class QuartzSchedulerService {
     
             log.info("📆 Scheduled one-time user fetch for user {} at {} ({})", userId, scheduledTime, scheduledTime.getZone());
     
+            // ✅ Track this one-time job in scheduledJobs list
+            RecurrencePattern pattern = new RecurrencePattern();
+            pattern.setStartTime(scheduledTime);
+            pattern.setTimezone(scheduledTime.getZone().getId());
+    
+            ScheduledJob oneTimeJob = new ScheduledJob();
+            oneTimeJob.setUserId(userId);
+            oneTimeJob.setRecurrence(pattern);
+    
+            scheduledJobs.add(oneTimeJob);
+    
         } catch (SchedulerException e) {
             log.error("❌ Failed to schedule user fetch: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to schedule user fetch", e);
         }
     }
     
+    
 
     public void scheduleRecurringJob(ScheduledJob job) {
         try {
+            scheduledJobs.add(job); 
             RecurrencePattern pattern = job.getRecurrence();
             
             // Ensure timezone is not null and properly set
@@ -71,9 +88,10 @@ public class QuartzSchedulerService {
             
             // Rest of your code remains the same...
             JobDetail jobDetail = JobBuilder.newJob(UserFetchJob.class)
-                .withIdentity("recurringJob-" + job.getUserId())
-                .usingJobData("userId", job.getUserId())
-                .build();
+            .withIdentity("recurringJob-" + job.getUserId(), "recurring-jobs")
+            .usingJobData("userId", job.getUserId())
+            .build();
+        
                 
             TriggerBuilder<Trigger> triggerBuilder = TriggerBuilder.newTrigger()
                 .withIdentity("recurringJobTrigger-" + job.getUserId())
@@ -82,7 +100,12 @@ public class QuartzSchedulerService {
             ScheduleBuilder<?> scheduleBuilder = createScheduleBuilder(pattern, zoneId);
             triggerBuilder.withSchedule(scheduleBuilder);
             
+            if (scheduler.checkExists(jobDetail.getKey())) {
+                log.info("♻️ Job already exists: {}", jobDetail.getKey());
+                return;
+            }
             scheduler.scheduleJob(jobDetail, triggerBuilder.build());
+            
             
             log.info("🔁 Scheduled recurring job for user {} with pattern {}", 
                 job.getUserId(), pattern);
@@ -217,5 +240,58 @@ public class QuartzSchedulerService {
                 pattern.getStartTime().getHour(),
                 daysOfMonthStr.toString());
     }
+
+    public List<ScheduledJob> getScheduledJobs() {
+        List<ScheduledJob> jobs = new ArrayList<>();
+    
+        try {
+            for (JobKey jobKey : scheduler.getJobKeys(GroupMatcher.anyGroup())) {
+                JobDetail jobDetail = scheduler.getJobDetail(jobKey);
+                JobDataMap dataMap = jobDetail.getJobDataMap();
+    
+                if (!dataMap.containsKey("userId")) continue;
+    
+                Long userId = dataMap.getLong("userId");
+                List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
+    
+                if (triggers.isEmpty()) continue;
+    
+                Trigger trigger = triggers.get(0);
+                Date nextFireTime = trigger.getNextFireTime();
+    
+                RecurrencePattern pattern = new RecurrencePattern();
+                pattern.setStartTime(ZonedDateTime.ofInstant(nextFireTime.toInstant(), ZoneId.systemDefault()));
+                pattern.setTimezone(ZoneId.systemDefault().getId());
+    
+                ScheduledJob job = new ScheduledJob();
+                job.setUserId(userId);
+                job.setRecurrence(pattern);
+    
+                jobs.add(job);
+
+                return new ArrayList<>(scheduledJobs);
+            }
+        } catch (SchedulerException e) {
+            log.error("❌ Failed to fetch scheduled jobs: {}", e.getMessage(), e);
+        }
+    
+        return jobs;
+    }
+
+    public boolean deleteJobByUserId(Long userId) {
+        // 🟢 Only remove from internal list, no Quartz operations
+        boolean removed = scheduledJobs.removeIf(job -> job.getUserId().equals(userId));
+        if (removed) {
+            log.info("🗑️ Deleted job for user {} from scheduledJobs list only", userId);
+        } else {
+            log.warn("⚠️ No job found in scheduledJobs list for user {}", userId);
+        }
+        return removed;
+    }
+    
+    
+    
+    
+    
 }
 

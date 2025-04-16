@@ -420,62 +420,6 @@ function RecurringJobScheduler() {
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  
-  //   setLoading(true);
-  //   setMessage(null);
-  //   setError(null);
-  
-  //   try {
-  //     const userIdNumber = parseInt(userId, 10);
-  //     if (isNaN(userIdNumber)) {
-  //       throw new Error('User ID must be a valid number');
-  //     }
-  
-  //     // ✅ Extract year, month, day, hour, minute from the selected Date
-  //     const year = startTime.getFullYear();
-  //     const month = startTime.getMonth();      // 0-indexed
-  //     const day = startTime.getDate();
-  //     const hour = startTime.getHours();
-  //     const minute = startTime.getMinutes();
-  
-  //     // ✅ Construct a moment object IN THE SELECTED TIMEZONE using those parts
-  //     const zonedTime = moment.tz({ year, month, day, hour, minute }, timezone);
-  
-  //     // ✅ This will correctly reflect what user selected (e.g. 11:26 in London = 11:26+01:00)
-  //     const formattedStartTime = zonedTime.format('YYYY-MM-DDTHH:mm:ssZ');
-  
-  //     const daysOfMonthAsNumbers = daysOfMonth.map(day =>
-  //       typeof day === 'string' ? parseInt(day, 10) : day
-  //     );
-  
-  //     const recurrence = {
-  //       frequency,
-  //       startTime: formattedStartTime,
-  //       timezone,
-  //       daysOfWeek: frequency === 'WEEKLY' ? daysOfWeek : [],
-  //       daysOfMonth: (frequency === 'MONTHLY' || frequency === 'YEARLY') ? daysOfMonthAsNumbers : [],
-  //       monthsOfYear: frequency === 'YEARLY' ? monthsOfYear : []
-  //     };
-  
-  //     const requestData = {
-  //       userId: userIdNumber,
-  //       recurrence
-  //     };
-  
-  //     console.log("Sending to backend:", requestData);
-  
-  //     const response = await api.scheduleRecurringJob(userIdNumber, recurrence);
-  //     setMessage(response);
-  //   } catch (err) {
-  //     console.error('Error details:', err.response?.data || err.message);
-  //     setError('Error scheduling recurring job: ' + (err.response?.data || err.message));
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();

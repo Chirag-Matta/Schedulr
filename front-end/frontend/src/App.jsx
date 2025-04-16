@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import UserDetails from './components/UserDetails';
 import ScheduleUserFetch from './components/ScheduleUserFetch';
 import RecurringJobScheduler from './components/RecurringJobScheduler';
+import JobDashboard from './components/JobDashboard';
 
 function App() {
   return (
@@ -28,7 +29,10 @@ function App() {
             </div>
           </div>
         </nav>
-        
+        <div className="container mt-4">
+          <JobDashboard />
+        </div>
+
         <Routes>
           <Route path="/" element={<UserDetails />} />
           <Route path="/schedule-fetch" element={<ScheduleUserFetch />} />

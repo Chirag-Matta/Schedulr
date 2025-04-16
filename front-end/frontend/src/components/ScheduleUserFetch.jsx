@@ -60,9 +60,10 @@ function ScheduleUserFetch() {
       const year = scheduledTime.getFullYear();
       
       // Create a moment in your local timezone with these values
-      const localMoment = moment().set({
-        year, month, date: day, hour: hours, minute: minutes, second: 0, millisecond: 0
-      });
+      const localMoment = moment.tz({
+        year, month, day, hour: hours, minute: minutes, second: 0, millisecond: 0
+      }, timezone);
+      
       
       // Format without converting (just format the date as a string)
       const timeString = localMoment.format("YYYY-MM-DDTHH:mm:ss");

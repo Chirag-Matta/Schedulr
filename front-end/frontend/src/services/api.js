@@ -87,6 +87,33 @@ const api = {
       throw error;
     }
   },
+
+  getAllScheduledJobs: async () => {
+    const response = await fetch("http://localhost:8080/api/recurring-jobs/all"); // full URL if no proxy
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to fetch jobs: ${text}`);
+    }
+    return response.json();
+  },
+
+  deleteScheduledJob: async (userId) => {
+    const response = await fetch(`/api/recurring-jobs/delete/${userId}`, {
+      method: "DELETE",
+    });
+  
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to delete job: ${text}`);
+    }
+  
+    return response.text();
+  }
+  
+  
+  
+  
+
 };
 
 export default api;

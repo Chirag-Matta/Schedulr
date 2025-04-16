@@ -11,10 +11,12 @@ import lombok.RequiredArgsConstructor;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
-
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.info.JavaInfo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +28,22 @@ public class RecurringJobController {
    private static final Logger logger = LoggerFactory.getLogger(RecurringJobController.class);
    private final QuartzSchedulerService quartzSchedulerService;
 
+   @GetMapping("/all")
+   public ResponseEntity<List<ScheduledJob>> getAllScheduledJobs() {
+       return ResponseEntity.ok(quartzSchedulerService.getScheduledJobs());
+   }
+
+   @DeleteMapping("/delete/{userId}")
+public ResponseEntity<String> deleteScheduledJob(@PathVariable Long userId) {
+    boolean deleted = quartzSchedulerService.deleteJobByUserId(userId);
+    if (deleted) {
+        return ResponseEntity.ok("✅ Job deleted for user " + userId);
+    } else {
+        return ResponseEntity.status(404).body("❌ Job not found for user " + userId);
+    }
+}
+
+   
 
    @PostMapping("/schedule")
    public ResponseEntity<String> scheduleRecurringJob(@RequestBody ScheduledJob job) {
@@ -53,4 +71,5 @@ public class RecurringJobController {
        quartzSchedulerService.scheduleRecurringJob(job);
        return ResponseEntity.ok("✅ Recurring job scheduled for user " + job.getUserId());
    }
+
 }
